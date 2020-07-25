@@ -1,0 +1,41 @@
+.stage {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-evenly;
+}
+.code {
+  background: #222;
+  color: #bbb;
+  /* font-family: 'Courier New', Courier, monospace; */
+  font-family: 'Source Code Pro', monospace;
+  font-size: 14px;
+  /* width: 90%; */
+  min-height: 300px;
+}
+.column {
+  /* align-items: center; */
+  display: flex;
+  flex-direction: column;
+  min-width: 40%;
+}
+.column-code {
+  width: 50%;
+}
+.column-render {
+  
+  min-height: 400px;
+
+  
+  height: 100vh;
+  align-items: center;
+  justify-content: flex-end; /* at bottom of column */
+}
+.controls {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+canvas {
+  width: 100%;
+}

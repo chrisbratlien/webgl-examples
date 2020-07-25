@@ -3,13 +3,102 @@
   <head>
     <meta charset="utf-8">
     <title>WebGL Demo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <link rel="stylesheet" href="../webgl.css" type="text/css">
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
   </head>
 
   <body>
-    <canvas id="glcanvas" width="640" height="480"></canvas>
+    <div class="stage">
+      <div class="column-code column">
+        <div class="btn-group controls">
+          <button class="btn btn-primary btn-sm btn-render">Render</button>
+        </div>
+        Vertex
+        <textarea class="code vs-code"></textarea>
+        Fragment
+        <textarea class="code fs-code"></textarea>
+      </div>
+      <div class="column column-render">
+        <div class="errors">
+        </div>
+        <canvas id="glcanvas" ></canvas>
+      </div>
+    </div>
   </body>
 
   <script src="../gl-matrix.js"></script>
   <script src="webgl-demo.js"></script>
+  <script>
+
+var vsSource = `
+    attribute vec4 aVertexPosition;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectionMatrix;
+
+    varying lowp vec4 vColor;
+
+    void main(void) {
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+      vColor = aVertexColor;
+    }
+  `;
+
+  var fsSource = `
+    varying lowp vec4 vColor;
+
+    void main(void) {
+      gl_FragColor = vColor;
+    }
+  `;
+
+  const btnRender = document.querySelector('.btn-render')
+
+  const taVSCode = document.querySelector('.vs-code')
+  const taFSCode = document.querySelector('.fs-code')
+  const uiErrors = document.querySelector('.errors')
+
+  taVSCode.value = vsSource;
+  taFSCode.value = fsSource;
+
+  function showError(errorOrMessage) {
+    if (!errorOrMessage) {
+      return uiErrors.innerHTML = '';
+    }
+    if (errorOrMessage instanceof Error) {
+      return uiErrors.innerHTML = errorOrMessage.message;
+    }
+    uiErrors.innerHTML = errorOrMessage;
+  }
+
+  btnRender.addEventListener('click',render);
+
+  function render() {
+    vsSource = taVSCode.value;
+    fsSource = taFSCode.value;
+    console.log(fsSource)
+    try {
+      showError(false); //clears errors
+      main();
+
+    }
+    catch (e) {
+      showError(e.message);
+    }
+  }
+
+  let timerUpdate = false;
+  taFSCode.addEventListener('keyup',function() {
+    ////console.log('wee');
+    clearTimeout(timerUpdate);
+    timerUpdate = setTimeout(render,100);
+  });
+
+
+  //kick off
+  render();
+  </script>
 </html>

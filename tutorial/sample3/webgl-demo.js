@@ -1,45 +1,25 @@
-main();
+//main();
 
 //
 // Start here
 //
 function main() {
+  console.log('main!')
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl');
 
   // If we don't have a GL context, give up now
 
   if (!gl) {
-    alert('Unable to initialize WebGL. Your browser or machine may not support it.');
+    showError('Unable to initialize WebGL. Your browser or machine may not support it.');
     return;
   }
 
   // Vertex shader program
 
-  const vsSource = `
-    attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColor;
-
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-
-    varying lowp vec4 vColor;
-
-    void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vColor = aVertexColor;
-    }
-  `;
 
   // Fragment shader program
 
-  const fsSource = `
-    varying lowp vec4 vColor;
-
-    void main(void) {
-      gl_FragColor = vColor;
-    }
-  `;
 
   // Initialize a shader program; this is where all the lighting
   // for the vertices and so forth is established.
@@ -104,7 +84,7 @@ function initBuffers(gl) {
   // Now set up the colors for the vertices
 
   var colors = [
-    1.0,  1.0,  1.0,  1.0,    // white
+    1.0,  1.0,  0.0,  1.0,    // white
     1.0,  0.0,  0.0,  1.0,    // red
     0.0,  1.0,  0.0,  1.0,    // green
     0.0,  0.0,  1.0,  1.0,    // blue
@@ -244,7 +224,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
   // If creating the shader program failed, alert
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+    showError('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
     return null;
   }
 
@@ -269,7 +249,7 @@ function loadShader(gl, type, source) {
   // See if it compiled successfully
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+    showError('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
