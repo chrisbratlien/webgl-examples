@@ -39,3 +39,9 @@
 canvas {
   width: 100%;
 }
+.errors {
+  background: #f77;
+}
+.logs {
+  background: #ff7;
+}

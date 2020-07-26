@@ -23,6 +23,8 @@
       <div class="column column-render">
         <div class="errors">
         </div>
+        <div class="logs">
+        </div>
         <canvas id="glcanvas" ></canvas>
       </div>
     </div>
@@ -38,7 +40,7 @@ var vsSource = `
 
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
-
+    //uniform float u_time;
     varying lowp vec4 vColor;
 
     void main(void) {
@@ -48,18 +50,23 @@ var vsSource = `
   `;
 
   var fsSource = `
-    varying lowp vec4 vColor;
 
+    precision lowp float;
+    //uniform float u_time;
+    varying lowp vec4 vColor;
+    float k = 0.707;
     void main(void) {
       gl_FragColor = vColor;
+      //gl_FragColor = vec4( vec3(u_time, 1.0, 1.0), 1.0);
     }
-  `;
+    `;
 
   const btnRender = document.querySelector('.btn-render')
 
   const taVSCode = document.querySelector('.vs-code')
   const taFSCode = document.querySelector('.fs-code')
   const uiErrors = document.querySelector('.errors')
+  const uiLogs = document.querySelector('.logs')
 
   taVSCode.value = vsSource;
   taFSCode.value = fsSource;
@@ -73,6 +80,12 @@ var vsSource = `
     }
     uiErrors.innerHTML = errorOrMessage;
   }
+  function showLog(msg) {
+    uiLogs.innerHTML += `<pre>${JSON.stringify(msg,null,4)}`;
+  }
+
+
+
 
   btnRender.addEventListener('click',render);
 
