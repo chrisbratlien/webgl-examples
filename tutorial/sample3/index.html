@@ -63,10 +63,14 @@ var vsSource = `
     uniform float u_time;
     varying lowp vec4 vColor;
     float k = 0.707;
+    float copyOfTime = u_time;
     void main(void) {
-      gl_FragColor = vColor;
-      gl_FragColor = vec4( vec3(u_time, 1.0, 1.0), 1.0);
+      //gl_FragColor = vColor;
+      gl_FragColor = vec4(u_time, 1.0, 1.0, 1.0); //use u_time once
+      gl_FragColor = vec4(vec3(1.0, u_time, 1.0), 1.0);
     }
+
+    
 
 
     `;
