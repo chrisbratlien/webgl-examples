@@ -22,12 +22,8 @@
 .column-code {
   width: 50%;
 }
-.column-render {
-  
+.column-render { 
   min-height: 400px;
-
-  
-  height: 100vh;
   align-items: center;
   justify-content: flex-end; /* at bottom of column */
 }
@@ -41,7 +37,10 @@ canvas {
 }
 .errors {
   background: #f77;
+  overflow: auto;
 }
 .logs {
   background: #ff7;
+  max-height: 300px;
+  overflow: auto;
 }

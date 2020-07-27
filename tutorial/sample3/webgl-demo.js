@@ -38,14 +38,14 @@ function main() {
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-      //u_time: gl.getUniformLocation(shaderProgram, 'u_time'),
+      u_time: gl.getUniformLocation(shaderProgram, 'u_time'),
     },
   };
 
 
 
 
-   showLog(gl.getError());
+   showLog('gl.getError()',gl.getError());
 
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
@@ -206,25 +206,23 @@ function drawScene(gl, programInfo, buffers) {
       false,
       modelViewMatrix);
 
-    /**
   gl.uniform1f(
     programInfo.uniformLocations.u_time,
     Math.random()
   )
-  ***/
 
-  showLog(programInfo)
+  showLog('programInfo', programInfo)
   
-  /**
   showLog(
+    'gl.getUniform wrt u_time',
     gl.getUniform(
       programInfo.program, 
       programInfo.uniformLocations.u_time
     )
   );
-  ***/
 
  showLog(
+  'gl.getUniform wrt projectionMatrix',
   gl.getUniform(
     programInfo.program, 
     programInfo.uniformLocations.projectionMatrix

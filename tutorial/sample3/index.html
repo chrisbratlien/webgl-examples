@@ -35,30 +35,34 @@
   <script>
 
 var vsSource = `
+    precision lowp float;
     attribute vec4 aVertexPosition;
     attribute vec4 aVertexColor;
 
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
-    //uniform float u_time;
+    uniform float u_time;
     varying lowp vec4 vColor;
 
     void main(void) {
       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
       vColor = aVertexColor;
     }
+   
   `;
 
   var fsSource = `
-
+   
     precision lowp float;
-    //uniform float u_time;
+    uniform float u_time;
     varying lowp vec4 vColor;
     float k = 0.707;
     void main(void) {
       gl_FragColor = vColor;
-      //gl_FragColor = vec4( vec3(u_time, 1.0, 1.0), 1.0);
+      gl_FragColor = vec4( vec3(u_time, 1.0, 1.0), 1.0);
     }
+
+
     `;
 
   const btnRender = document.querySelector('.btn-render')
@@ -80,8 +84,15 @@ var vsSource = `
     }
     uiErrors.innerHTML = errorOrMessage;
   }
-  function showLog(msg) {
-    uiLogs.innerHTML += `<pre>${JSON.stringify(msg,null,4)}`;
+  function showLog(...theArgs) {
+    console.log('theArgs',theArgs);
+    var msg = theArgs.reduce( (accum, arg) => {
+      console.log('arg',arg,'accum',accum);
+      accum.push( JSON.stringify(arg,null,4) );
+      return accum;
+    },[]);
+    console.log('msg',msg);
+    uiLogs.innerHTML += `<pre>${msg.join("\n")}</pre>`;
   }
 
 
