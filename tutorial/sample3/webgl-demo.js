@@ -4,7 +4,7 @@
 // Start here
 //
 function main() {
-  console.log('main!')
+  //console.log('main!')
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl');
 
@@ -221,14 +221,15 @@ function drawScene(gl, programInfo, buffers) {
     )
   );
 
- showLog(
+/**
+  showLog(
   'gl.getUniform wrt projectionMatrix',
   gl.getUniform(
     programInfo.program, 
     programInfo.uniformLocations.projectionMatrix
   )
  );
-
+***/
 
 
 

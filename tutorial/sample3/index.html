@@ -14,6 +14,12 @@
       <div class="column-code column">
         <div class="btn-group controls">
           <button class="btn btn-primary btn-sm btn-render">Render</button>
+          <label>
+            <input class="cb-auto-render" type="checkbox" /> Auto render
+          </label>
+          <label>
+            <input class="cb-logging" type="checkbox" /> Logging
+          </label>          
         </div>
         Vertex
         <textarea class="code vs-code"></textarea>
@@ -71,6 +77,11 @@ var vsSource = `
   const taFSCode = document.querySelector('.fs-code')
   const uiErrors = document.querySelector('.errors')
   const uiLogs = document.querySelector('.logs')
+  const cbAutoRender = document.querySelector('.cb-auto-render')
+  const cbLogging = document.querySelector('.cb-logging')
+
+  var boolAutoRender = false;
+  var boolLogging = false;
 
   taVSCode.value = vsSource;
   taFSCode.value = fsSource;
@@ -85,25 +96,29 @@ var vsSource = `
     uiErrors.innerHTML = errorOrMessage;
   }
   function showLog(...theArgs) {
-    console.log('theArgs',theArgs);
+    if (!boolLogging) { return false; }
+    //console.log('theArgs',theArgs);
     var msg = theArgs.reduce( (accum, arg) => {
-      console.log('arg',arg,'accum',accum);
+      //console.log('arg',arg,'accum',accum);
       accum.push( JSON.stringify(arg,null,4) );
       return accum;
     },[]);
-    console.log('msg',msg);
+    //console.log('msg',msg);
     uiLogs.innerHTML += `<pre>${msg.join("\n")}</pre>`;
   }
 
 
-
+  cbAutoRender.addEventListener('change',function(){
+    boolAutoRender = this.checked;
+    if (boolAutoRender) { render(); }
+  });
 
   btnRender.addEventListener('click',render);
 
   function render() {
     vsSource = taVSCode.value;
     fsSource = taFSCode.value;
-    console.log(fsSource)
+    ///console.log(fsSource)
     try {
       showError(false); //clears errors
       main();
@@ -111,6 +126,9 @@ var vsSource = `
     }
     catch (e) {
       showError(e.message);
+    }
+    if (boolAutoRender) {
+      setTimeout(render,100);
     }
   }
 
