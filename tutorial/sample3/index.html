@@ -75,6 +75,18 @@ var vsSource = `
 
     `;
 
+    const positions = [
+    1.0,  1.0,
+    -1.0,  1.0,
+    1.0, -1.0,
+    -1.0, -1.0,
+  ];
+  var colors = [
+    1.0,  1.0,  0.0,  1.0,    // white
+    1.0,  0.0,  0.0,  1.0,    // red
+    0.0,  1.0,  0.0,  1.0,    // green
+    0.0,  0.0,  1.0,  1.0,    // blue
+  ];
   const btnRender = document.querySelector('.btn-render')
 
   const taVSCode = document.querySelector('.vs-code')
