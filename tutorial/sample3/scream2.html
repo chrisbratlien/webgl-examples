@@ -13,6 +13,11 @@
   Your browser does not support the HTML5 canvas tag.
   </canvas>
 
+  <select class="dd-transformer">
+
+  </select>
+
+
 <script type="module">
   //import scalar, {lerp} from './scalar.js';
   import scalar, {lerp, remap, invlerp} from './scalar.js';
@@ -35,6 +40,46 @@ function followX(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
 }
 function followY(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
   return [v_y, v_y, v_y, a];
+}
+
+function tXY(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+  let v = ((v_x * t_x) + (v_y * t_y))/2;
+  return [v, v, v, a];
+}
+
+let transformers = {
+  followX: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    return [v_x, v_x, v_x, a];
+  },
+  followY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    return [v_y, v_y, v_y, a];
+  },
+  tXY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    let v = ((v_x * t_x) + (v_y * t_y))/2;
+    return [v, v, v, a];
+  },
+  blushy: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    let tv = (v_x + v_y) * 0.5;
+
+    //r *= t_x * t_y;
+    //g *= t_x * t_y;
+    r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+    //g = r;
+    b = r;
+
+    //r *= (1-t_y);
+    //g *= (1-t_x);
+    //b *= (1-t_y);// * t_y;
+    //b *= t_x * t_y;
+
+    //r = v_x;
+    //g = tv;
+    //g = tv;
+    //b = tv;
+
+    return [r,g,b,a];
+  }
+
 }
 
 function transformColor(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
@@ -110,12 +155,26 @@ var img = document.getElementById("scream");
 
 var c2 = document.querySelector('.canvas-chocolate');
 var img2 = document.querySelector('.lindt-jpg');
-
+var sel = document.querySelector('.dd-transformer');
 setTimeout(function() { 
   process(c,img,transformColor) 
-  process(c,img,transformColor) 
-  process(c2,img2,followY);
+  process(c2,img2,tXY);
 },1000);
+
+
+Object.keys(transformers).forEach(function(key){
+  var opt = document.createElement('option');
+  opt.value = key;
+  opt.innerText = key;
+  sel.appendChild(opt)
+});
+sel.addEventListener('change',function(){
+  console.log('selInd',sel.selectedIndex);
+  let fn = transformers[Object.keys(transformers)[sel.selectedIndex]];
+  //console.log('fn',fn);
+  process(c,img,fn);
+  process(c2,img2,fn);
+});
 
 </script>
 
