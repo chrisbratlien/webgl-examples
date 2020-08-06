@@ -12,10 +12,12 @@
   <canvas class="canvas-chocolate">
   Your browser does not support the HTML5 canvas tag.
   </canvas>
-
+<br />
   <select class="dd-transformer">
-
+    <option> (choose) </option>
   </select>
+  <input class="slider01" type="range" min="0" max="1" step="0.01" />O to 1
+  <input class="slider02" type="range" min="0" max="1" step="0.01" />O to 1
 
 
 <script type="module">
@@ -35,19 +37,10 @@ function toXY(i,w,h) {
   return [x,y];
 }
 
-function followX(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
-  return [v_x, v_x, v_x, a];
-}
-function followY(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
-  return [v_y, v_y, v_y, a];
-}
-
-function tXY(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
-  let v = ((v_x * t_x) + (v_y * t_y))/2;
-  return [v, v, v, a];
-}
-
 let transformers = {
+  identity: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    return [r, g, b, a];
+  }, 
   followX: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
     return [v_x, v_x, v_x, a];
   },
@@ -58,6 +51,30 @@ let transformers = {
     let v = ((v_x * t_x) + (v_y * t_y))/2;
     return [v, v, v, a];
   },
+  tv: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    let tv = (v_x + v_y) * 0.5;
+    return [tv, tv, tv, a];
+  },
+  redFadeOutWithY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    r *= (1-t_y);
+    return [r,g,b,a];
+  },
+  redFadeInWithY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    r *= t_y;
+    return [r,g,b,a];
+  },
+  dunno: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    //r *= t_y;
+    let t2 = Math.sqrt(t_x**2 + t_y**2)
+    let t3 = (t2**2);
+    r *= t3;
+    g *= t3;
+    b *= t3;
+
+
+    return [r,g,b,a];
+  },
+
   blushy: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
     let tv = (v_x + v_y) * 0.5;
 
@@ -78,19 +95,34 @@ let transformers = {
     //b = tv;
 
     return [r,g,b,a];
-  }
+  },
+  remap:  (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    //r = remap(0,255,100,200)
+    //let tx2 = remap(0,1,0.3,0.6,t_x);
+    //let v2 = remap(100,120,0,255,v_x);
+    //let start01 = slider01.value;
 
-}
+    //let start255 = start01 * 255;
+    //console.log('start01',start01,'start255',start255);
+    let start255 = uniform.s01 * 255;
+    let end255 = uniform.s02 * 255;
 
-function transformColor(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    r = remap(start255,end255,0,255,r);
+    g = remap(start255,end255,0,255,g);
+    b = remap(start255,end255,0,255,b);
+    return [r, g, b, a];
+  },
+  transformColor: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
     let tv = (v_x + v_y) * 0.5;
 
-    //r *= t_x * t_y;
+    r = 3 * r * (1-t_y) * Math.sin(2 * t_x * Math.PI);
+    g = 3 * g * (1-t_x) * Math.sin(2 * t_y * Math.PI);
+    b = 3 * b * (1-t_x * t_y) * Math.sin(2 * t_x * t_y * Math.PI);
     //g *= t_x * t_y;
-    r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+    //r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
     //g = r;
-    b = r;
-
+    //g *= t_y * (1-t_x);
+   // b *= t_y;
     //r *= (1-t_y);
     //g *= (1-t_x);
     //b *= (1-t_y);// * t_y;
@@ -104,6 +136,9 @@ function transformColor(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
   return [r,g,b,a];
 }
 
+}
+
+
 function process(c,img,transformer) {
   var ctx = c.getContext("2d");
   c.width = img.width;
@@ -112,6 +147,8 @@ function process(c,img,transformer) {
   var imgData = ctx.getImageData(0, 0, c.width, c.height);
   console.log(c.width,c.height);
   // invert colors
+  let slider01Value = slider01.value;
+  let slider02Value = slider02.value;
   var i,pixelIdx = 0;
   for (i = 0; i < imgData.data.length; i += 4) {
     let pixelIdx = Math.floor(i / 4);
@@ -122,22 +159,30 @@ function process(c,img,transformer) {
     let t_y = invlerp(0,c.height,y);
     let v_x =  remap(0,c.width,0,255,x);
     let v_y =  remap(0,c.height,0,255,y);
+    var [r,g,b,a] = [
+      imgData.data[i+0],
+      imgData.data[i+1],
+      imgData.data[i+2],
+      imgData.data[i+3],
+    ];
     //console.log('i',i,'pixelIdx',pixelIdx,'x',x,'y',y,'t_x',t_x,'v_x',v_x);
 
-    let [r,g,b,a] = transformer(
+    [r,g,b,a] = transformer(
       x,
       y,
       t_x, //x remapped from 0 to 1
       t_y, //y remapped from 0 to 1
       v_x, //x remapped from 0 to 255
       v_y, //y remapped from 0 to 255
-      imgData.data[i+0],
-      imgData.data[i+1],
-      imgData.data[i+2],
-      imgData.data[i+3],
+      r,
+      g,
+      b,
+      a,
       {
         width: c.width,
-        height: c.height
+        height: c.height,
+        s01: slider01Value,
+        s02: slider02Value
       }
     );
 
@@ -156,11 +201,11 @@ var img = document.getElementById("scream");
 var c2 = document.querySelector('.canvas-chocolate');
 var img2 = document.querySelector('.lindt-jpg');
 var sel = document.querySelector('.dd-transformer');
-setTimeout(function() { 
-  process(c,img,transformColor) 
-  process(c2,img2,tXY);
-},1000);
+var slider01 = document.querySelector('.slider01');
+var slider02 = document.querySelector('.slider02');
 
+
+var procrastinator = false;
 
 Object.keys(transformers).forEach(function(key){
   var opt = document.createElement('option');
@@ -168,13 +213,30 @@ Object.keys(transformers).forEach(function(key){
   opt.innerText = key;
   sel.appendChild(opt)
 });
+
+let selectedFN = false;
+function getFN() {
+  if (sel.selectedIndex == 0) { return false; }
+  let fn = transformers[Object.keys(transformers)[sel.selectedIndex - 1]]; //nothing is in the 0 index
+  return fn;
+}
 sel.addEventListener('change',function(){
-  console.log('selInd',sel.selectedIndex);
-  let fn = transformers[Object.keys(transformers)[sel.selectedIndex]];
-  //console.log('fn',fn);
-  process(c,img,fn);
-  process(c2,img2,fn);
+  //console.log('selInd',sel.selectedIndex);
+  selectedFN = getFN();
+  process(c,img,selectedFN) 
+  process(c2,img2,selectedFN);
 });
+
+[slider01, slider02].forEach(function(slider){
+  slider.addEventListener('change',function(e){
+    console.log(e.target.value,slider01.value)
+    clearTimeout(procrastinator);
+    procrastinator = setTimeout(function() {
+      process(c,img,selectedFN) 
+      process(c2,img2,selectedFN);
+    },100);
+  });
+})
 
 </script>
 
