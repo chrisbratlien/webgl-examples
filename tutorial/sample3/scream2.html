@@ -2,9 +2,17 @@
 <html>
 <body>
 
-<img id="scream" src="img_the_scream.jpg" alt="The Scream" width="220" height="277">
-<canvas id="myCanvas" width="220" height="277" style="border:1px solid #d3d3d3;">
-Your browser does not support the HTML5 canvas tag.</canvas>
+  <img id="scream" src="img_the_scream.jpg" alt="The Scream">
+  <canvas id="myCanvas">
+  Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+
+  <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
+  <canvas class="canvas-chocolate">
+  Your browser does not support the HTML5 canvas tag.
+  </canvas>
+
 <script type="module">
   //import scalar, {lerp} from './scalar.js';
   import scalar, {lerp, remap, invlerp} from './scalar.js';
@@ -22,19 +30,39 @@ function toXY(i,w,h) {
   return [x,y];
 }
 
-function transformColor(x,y,r,g,b,a,uniform) {
-    let v_x =  remap(0,uniform.width,0,255,x);
-    let v_y =  remap(0,uniform.height,0,255,y);
+function followX(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+  return [v_x, v_x, v_x, a];
+}
+function followY(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+  return [v_y, v_y, v_y, a];
+}
 
-    r = v_x;
+function transformColor(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    let tv = (v_x + v_y) * 0.5;
+
+    //r *= t_x * t_y;
+    //g *= t_x * t_y;
+    r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+    //g = r;
+    b = r;
+
+    //r *= (1-t_y);
+    //g *= (1-t_x);
+    //b *= (1-t_y);// * t_y;
+    //b *= t_x * t_y;
+
+    //r = v_x;
+    //g = tv;
+    //g = tv;
+    //b = tv;
 
   return [r,g,b,a];
 }
 
-function process() {
-  var c = document.getElementById("myCanvas");
+function process(c,img,transformer) {
   var ctx = c.getContext("2d");
-  var img = document.getElementById("scream");
+  c.width = img.width;
+  c.height = img.height;
   ctx.drawImage(img, 0, 0);
   var imgData = ctx.getImageData(0, 0, c.width, c.height);
   console.log(c.width,c.height);
@@ -51,9 +79,13 @@ function process() {
     let v_y =  remap(0,c.height,0,255,y);
     //console.log('i',i,'pixelIdx',pixelIdx,'x',x,'y',y,'t_x',t_x,'v_x',v_x);
 
-    let [r,g,b,a] = transformColor(
+    let [r,g,b,a] = transformer(
       x,
       y,
+      t_x, //x remapped from 0 to 1
+      t_y, //y remapped from 0 to 1
+      v_x, //x remapped from 0 to 255
+      v_y, //y remapped from 0 to 255
       imgData.data[i+0],
       imgData.data[i+1],
       imgData.data[i+2],
@@ -68,27 +100,22 @@ function process() {
     imgData.data[i+1] = g;
     imgData.data[i+2] = b;
     imgData.data[i+3] = a;
-
-
-
-    /**
-    imgData.data[i+0] = v_x;
-    imgData.data[i+1] = v_x;
-    imgData.data[i+2] = v_y;
-    imgData.data[i+3] = 255;
-    ***/
-    /**
-    imgData.data[i] = 255 - imgData.data[i]; //r
-    imgData.data[i+1] = 255 - imgData.data[i+1]; //g
-    imgData.data[i+2] = 255 - imgData.data[i+2]; //b
-    imgData.data[i+3] = 255; //a
-    ***/
     pixelIdx += 1;
   }
   ctx.putImageData(imgData, 0, 0);
 }
 
-setTimeout(process,1000);
+var c = document.getElementById("myCanvas");
+var img = document.getElementById("scream");
+
+var c2 = document.querySelector('.canvas-chocolate');
+var img2 = document.querySelector('.lindt-jpg');
+
+setTimeout(function() { 
+  process(c,img,transformColor) 
+  process(c,img,transformColor) 
+  process(c2,img2,followY);
+},1000);
 
 </script>
 
