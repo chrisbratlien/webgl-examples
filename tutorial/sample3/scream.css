@@ -1,0 +1,15 @@
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.slider-wrap {
+  
+}
+.slider-wrap input {
+  cursor: pointer;
+}

@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <link rel="stylesheet" href="scream.css">
+</head>
 <body>
 
   <img id="scream" src="img_the_scream.jpg" alt="The Scream">
@@ -12,13 +15,14 @@
   <canvas class="canvas-chocolate">
   Your browser does not support the HTML5 canvas tag.
   </canvas>
+  <input class="file-input" type="file" />
 <br />
   <select class="dd-transformer">
     <option> (choose) </option>
   </select>
-  <input class="slider01" type="range" min="0" max="1" step="0.01" />O to 1
-  <input class="slider02" type="range" min="0" max="1" step="0.01" />O to 1
-
+  <div class="slider-wrap flex-column">
+  </div>
+  
 
 <script type="module">
   //import scalar, {lerp} from './scalar.js';
@@ -37,106 +41,154 @@ function toXY(i,w,h) {
   return [x,y];
 }
 
-let transformers = {
-  identity: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
-    return [r, g, b, a];
-  }, 
-  followX: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
-    return [v_x, v_x, v_x, a];
+let transformers = [
+  {
+  name: 'identity',
+    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+      return [r, g, b, a];
+    },
+    sliderLabels: []
   },
-  followY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    return [v_y, v_y, v_y, a];
+  {
+    name: 'follow X',
+    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+      return [v_x, v_x, v_x, a];
+    },
   },
-  tXY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    let v = ((v_x * t_x) + (v_y * t_y))/2;
-    return [v, v, v, a];
+  {
+    name: 'followY',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      return [v_y, v_y, v_y, a];
+    },
   },
-  tv: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    let tv = (v_x + v_y) * 0.5;
-    return [tv, tv, tv, a];
+  {
+    name: 'tXY',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let v = ((v_x * t_x) + (v_y * t_y))/2;
+      return [v, v, v, a];
+    },
   },
-  redFadeOutWithY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    r *= (1-t_y);
-    return [r,g,b,a];
+  {
+    name: 'tv',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let tv = (v_x + v_y) * 0.5;
+      return [tv, tv, tv, a];
+    },
   },
-  redFadeInWithY: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    r *= t_y;
-    return [r,g,b,a];
+  {
+    name: 'redFadeOutWithY',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      r *= (1-t_y);
+      return [r,g,b,a];
+    },
   },
-  dunno: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    //r *= t_y;
-    let t2 = Math.sqrt(t_x**2 + t_y**2)
-    let t3 = (t2**2);
-    r *= t3;
-    g *= t3;
-    b *= t3;
-
-
-    return [r,g,b,a];
+  {
+    name: 'redFadeInWithY',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      r *= t_y;
+      return [r,g,b,a];
+    },
   },
-
-  blushy: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    let tv = (v_x + v_y) * 0.5;
-
-    //r *= t_x * t_y;
-    //g *= t_x * t_y;
-    r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
-    //g = r;
-    b = r;
-
-    //r *= (1-t_y);
-    //g *= (1-t_x);
-    //b *= (1-t_y);// * t_y;
-    //b *= t_x * t_y;
-
-    //r = v_x;
-    //g = tv;
-    //g = tv;
-    //b = tv;
-
-    return [r,g,b,a];
+  {
+    name: 'dunno',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      //r *= t_y;
+      let t2 = Math.sqrt(t_x**2 + t_y**2)
+      let t3 = (t2**2);
+      r *= t3;
+      g *= t3;
+      b *= t3;
+      return [r,g,b,a];
+    },
   },
-  remap:  (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    //r = remap(0,255,100,200)
-    //let tx2 = remap(0,1,0.3,0.6,t_x);
-    //let v2 = remap(100,120,0,255,v_x);
-    //let start01 = slider01.value;
-
-    //let start255 = start01 * 255;
-    //console.log('start01',start01,'start255',start255);
-    let start255 = uniform.s01 * 255;
-    let end255 = uniform.s02 * 255;
-
-    r = remap(start255,end255,0,255,r);
-    g = remap(start255,end255,0,255,g);
-    b = remap(start255,end255,0,255,b);
-    return [r, g, b, a];
+  {
+    name: 'blushy',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let tv = (v_x + v_y) * 0.5;
+      //r *= t_x * t_y;
+      //g *= t_x * t_y;
+      r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+      //g = r;
+      b = r;
+      //r *= (1-t_y);
+      //g *= (1-t_x);
+      //b *= (1-t_y);// * t_y;
+      //b *= t_x * t_y;
+      //r = v_x;
+      //g = tv;
+      //g = tv;
+      //b = tv;
+      return [r,g,b,a];
+    },
   },
-  transformColor: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
-    let tv = (v_x + v_y) * 0.5;
-
-    r = 3 * r * (1-t_y) * Math.sin(2 * t_x * Math.PI);
-    g = 3 * g * (1-t_x) * Math.sin(2 * t_y * Math.PI);
-    b = 3 * b * (1-t_x * t_y) * Math.sin(2 * t_x * t_y * Math.PI);
-    //g *= t_x * t_y;
-    //r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
-    //g = r;
-    //g *= t_y * (1-t_x);
-   // b *= t_y;
-    //r *= (1-t_y);
-    //g *= (1-t_x);
-    //b *= (1-t_y);// * t_y;
-    //b *= t_x * t_y;
-
-    //r = v_x;
-    //g = tv;
-    //g = tv;
-    //b = tv;
-
-  return [r,g,b,a];
-}
-
-}
+  {
+    name: 'remap input sliders',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let start255 = + uniform.sliders[0].value * 255;
+      let end255 = + uniform.sliders[1].value * 255;
+      r = remap(start255,end255,0,255,r);
+      g = remap(start255,end255,0,255,g);
+      b = remap(start255,end255,0,255,b);
+      return [r, g, b, a];
+    },
+  },
+  {
+    name: 'remap output sliders',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let start255 = + uniform.sliders[0].value * 255;
+      let end255 = + uniform.sliders[1].value * 255;
+      r = remap(0,255,start255,end255,r);
+      g = remap(0,255,start255,end255,g);
+      b = remap(0,255,start255,end255,b);
+      return [r, g, b, a];
+    },
+  },
+  {
+    name: 'remap outer in/out sliders',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let start255 = + uniform.sliders[0].value * 255;
+      let end255 = + uniform.sliders[1].value * 255;
+      r = remap(start255,255,0,end255,r);
+      g = remap(start255,255,0,end255,g);
+      b = remap(start255,255,0,end255,b);
+      return [r, g, b, a];
+    },
+  },
+  {
+    name: 'remap inner in/out sliders',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let start255 = + uniform.sliders[0].value * 255;
+      let end255 = + uniform.sliders[1].value * 255;
+      r = remap(0,start255,end255,255,r);
+      g = remap(0,start255,end255,255,g);
+      b = remap(0,start255,end255,255,b);
+      return [r, g, b, a];
+    },
+  },
+  {
+    name: 'transformColor',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+      let tv = (v_x + v_y) * 0.5;
+      r = 3 * r * (1-t_y) * Math.sin(2 * t_x * Math.PI);
+      g = 3 * g * (1-t_x) * Math.sin(2 * t_y * Math.PI);
+      b = 3 * b * (1-t_x * t_y) * Math.sin(2 * t_x * t_y * Math.PI);
+      //g *= t_x * t_y;
+      //r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+      //g = r;
+      //g *= t_y * (1-t_x);
+      // b *= t_y;
+      //r *= (1-t_y);
+      //g *= (1-t_x);
+      //b *= (1-t_y);// * t_y;
+      //b *= t_x * t_y;
+      //r = v_x;
+      //g = tv;
+      //g = tv;
+      //b = tv;
+      return [r,g,b,a];
+    }
+  }
+];
 
 
 function process(c,img,transformer) {
@@ -145,10 +197,8 @@ function process(c,img,transformer) {
   c.height = img.height;
   ctx.drawImage(img, 0, 0);
   var imgData = ctx.getImageData(0, 0, c.width, c.height);
-  console.log(c.width,c.height);
+  //console.log(c.width,c.height);
   // invert colors
-  let slider01Value = slider01.value;
-  let slider02Value = slider02.value;
   var i,pixelIdx = 0;
   for (i = 0; i < imgData.data.length; i += 4) {
     let pixelIdx = Math.floor(i / 4);
@@ -179,10 +229,9 @@ function process(c,img,transformer) {
       b,
       a,
       {
+        ...uniform,
         width: c.width,
-        height: c.height,
-        s01: slider01Value,
-        s02: slider02Value
+        height: c.height
       }
     );
 
@@ -201,25 +250,33 @@ var img = document.getElementById("scream");
 var c2 = document.querySelector('.canvas-chocolate');
 var img2 = document.querySelector('.lindt-jpg');
 var sel = document.querySelector('.dd-transformer');
-var slider01 = document.querySelector('.slider01');
-var slider02 = document.querySelector('.slider02');
 
+var sliderWrap = document.querySelector('.slider-wrap');
+
+var fileInput = document.querySelector('.file-input');
 
 var procrastinator = false;
 
-Object.keys(transformers).forEach(function(key){
+var uniform = {
+  sliders: [],
+  sliderLabels: []
+};
+
+transformers.forEach(function(tra){
   var opt = document.createElement('option');
-  opt.value = key;
-  opt.innerText = key;
+  opt.value = tra.name;
+  opt.innerText = tra.name;
   sel.appendChild(opt)
 });
 
-let selectedFN = false;
+let selectedFN = transformers[0].fn
+
 function getFN() {
   if (sel.selectedIndex == 0) { return false; }
-  let fn = transformers[Object.keys(transformers)[sel.selectedIndex - 1]]; //nothing is in the 0 index
-  return fn;
+  let tra = transformers[sel.selectedIndex - 1]; //nothing is in the 0 index
+  return tra.fn;
 }
+
 sel.addEventListener('change',function(){
   //console.log('selInd',sel.selectedIndex);
   selectedFN = getFN();
@@ -227,16 +284,53 @@ sel.addEventListener('change',function(){
   process(c2,img2,selectedFN);
 });
 
-[slider01, slider02].forEach(function(slider){
-  slider.addEventListener('change',function(e){
-    console.log(e.target.value,slider01.value)
+function fileOnload(e) {
+  img2.src = e.target.result;
+}
+
+img2.addEventListener('load',function() {
+  console.log('LOAD!!!');
+  process(c2,img2,selectedFN);
+/**
+**/
+});
+
+fileInput.addEventListener('change',function(e){
+  console.log(e.target.files);
+  var file = e.target.files[0];
+  var reader = new FileReader();
+  reader.onload = fileOnload;
+  reader.readAsDataURL(file);
+});
+
+
+/*
+
+*/
+
+
+[0,1,2,3,4,5,6,7,8,9].forEach(function(n){
+  let sl = document.createElement('input');
+  sl.step = 0.01;
+  sl.min = 0;
+  sl.max = 1;
+  sl.value = 0;
+  let label = document.createElement('label');
+  label.innerText = '0 to 1'
+  sl.type = 'range';
+  sliderWrap.appendChild(sl);
+  sliderWrap.appendChild(label);
+  sl.addEventListener('change',function(e){
+    //console.log(e.target.value,sl.value)
     clearTimeout(procrastinator);
     procrastinator = setTimeout(function() {
       process(c,img,selectedFN) 
       process(c2,img2,selectedFN);
     },100);
   });
-})
+  uniform.sliders.push(sl);
+  uniform.sliderLabels.push(label);
+});
 
 </script>
 
