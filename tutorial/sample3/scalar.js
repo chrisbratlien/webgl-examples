@@ -9,7 +9,7 @@ export function lerp ( a, b, t, clamp) {
   if (clamp) {
     t = clamp01(t);
   }
-  let result = (b - a) * t;
+  let result = (1-t) * a + t * b;
   return result;
 }
 
