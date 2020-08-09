@@ -64,35 +64,35 @@ function chainOfTransforms(transforms) {
 let transformers = [
   {
   name: 'identity',
-    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) {
+    fn: function(ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) {
       return [r, g, b, a];
     },
     sliderLabels: []
   },
   {
     name: 'follow X',
-    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) {
-      return [v_x, v_x, v_x, a];
+    fn: function(ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) {
+      return [x, x, x, a];
     },
   },
   {
     name: 'followY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      return [v_y, v_y, v_y, a];
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      return [y, y, y, a];
     },
   },
   {
     name: 'goob: sin of tx*pi',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let v = Math.sin(t_x * Math.PI) * 255;
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      let v = Math.sin(x * Math.PI);
       return [v, v, v, a];
     }
   },
   {
     name: 'goobpic: sin of tx*pi*slider applied to rgb, where slider goes to 100',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
       let s = + uniform.sliders[0].value * 100;
-      let v = Math.sin(s * t_x * Math.PI);
+      let v = Math.sin(s * x * Math.PI);
       r *= v;
       g *= v;
       b *= v;
@@ -102,13 +102,13 @@ let transformers = [
   },
   {
     name: 'goobpic3',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
       let sr = + uniform.sliders[0].value * 100;
       let sg = + uniform.sliders[1].value * 100;
       let sb = + uniform.sliders[2].value * 100;
-      let vr = Math.sin(sr * t_x * Math.PI);
-      let vg = Math.sin(sg * t_x * Math.PI);
-      let vb = Math.sin(sb * t_x * Math.PI);
+      let vr = Math.sin(sr * x * Math.PI);
+      let vg = Math.sin(sg * x * Math.PI);
+      let vb = Math.sin(sb * x * Math.PI);
       r *= vr;
       g *= vg;
       b *= vb;
@@ -118,7 +118,7 @@ let transformers = [
   },
   {
     name: 'goobpic4',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -134,8 +134,8 @@ let transformers = [
     }
   },  
   {
-    name: 'goobpic5 slider: lerps r,g,b(255) towards 255',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    name: 'goobpic5 slider: lerps r,g,b(0..1) towards 1',
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -143,72 +143,60 @@ let transformers = [
       let sa = + uniform.sliders[3].value;
 
       //console.log(r,'r!','g',g,'b',b);
-      r = lerp(r,255,sr);
-      g = lerp(g,255,sg);
-      b = lerp(b,255,sb);
+      r = lerp(r,1,sr);
+      g = lerp(g,1,sg);
+      b = lerp(b,1,sb);
       ///a = lerp(a,255,sa);
 
       return [r, g, b, a];
     }
   },  
   {
-    name: 'goobpic6 slider: lerp +/- diff towards white',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    name: 'goobpic6 slider: lerp/extrapolate +/- diff towards/away white',
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
       let sb = + uniform.sliders[2].value;
       let sa = + uniform.sliders[3].value;
 
-      /*
-      sr = 2 * sr - 1;
-      sg = 2 * sg - 1;
-      sb = 2 * sb - 1;
-      */
       sr = remap(0,1,-1,1,sr);
       sg = remap(0,1,-1,1,sg);
       sb = remap(0,1,-1,1,sb);
 
-      r = lerp(r,255,sr);
-      g = lerp(g,255,sg);
-      b = lerp(b,255,sb);
+      r = lerp(r,1,sr);
+      g = lerp(g,1,sg);
+      b = lerp(b,1,sb);
 
       return [r, g, b, a];
     }
   },  
   {
     name: 'tXY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let v = ((v_x * t_x) + (v_y * t_y))/2;
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      let v = (x + y)/2;
       return [v, v, v, a];
     },
   },
   {
-    name: 'tv',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let tv = (v_x + v_y) * 0.5;
-      return [tv, tv, tv, a];
-    },
-  },
-  {
     name: 'redFadeOutWithY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      r *= (1-t_y);
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      r *= 1 - y;
       return [r,g,b,a];
     },
   },
   {
     name: 'redFadeInWithY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      r *= t_y;
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      r *= y;
       return [r,g,b,a];
     },
   },
   {
     name: 'dunno',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
       //r *= t_y;
-      let t2 = Math.sqrt(t_x**2 + t_y**2)
+      let t2 = Math.sqrt(x**2 + y**2)
       let t3 = (t2**2);
       r *= t3;
       g *= t3;
@@ -218,88 +206,31 @@ let transformers = [
   },
   {
     name: 'blushy',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let tv = (v_x + v_y) * 0.5;
-      //r *= t_x * t_y;
-      //g *= t_x * t_y;
-      r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      r *= Math.sin(x * Math.PI) * Math.cos(y * Math.PI);
       //g = r;
       b = r;
-      //r *= (1-t_y);
-      //g *= (1-t_x);
-      //b *= (1-t_y);// * t_y;
-      //b *= t_x * t_y;
-      //r = v_x;
-      //g = tv;
-      //g = tv;
-      //b = tv;
       return [r,g,b,a];
     },
   },
   {
     name: 'remap input sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let start255 = + uniform.sliders[0].value * 255;
-      let end255 = + uniform.sliders[1].value * 255;
-      r = remap(start255,end255,0,255,r);
-      g = remap(start255,end255,0,255,g);
-      b = remap(start255,end255,0,255,b);
-      return [r, g, b, a];
-    },
-  },
-  {
-    name: 'remap output sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let start255 = + uniform.sliders[0].value * 255;
-      let end255 = + uniform.sliders[1].value * 255;
-      r = remap(0,255,start255,end255,r);
-      g = remap(0,255,start255,end255,g);
-      b = remap(0,255,start255,end255,b);
-      return [r, g, b, a];
-    },
-  },
-  {
-    name: 'remap outer in/out sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let start255 = + uniform.sliders[0].value * 255;
-      let end255 = + uniform.sliders[1].value * 255;
-      r = remap(start255,255,0,end255,r);
-      g = remap(start255,255,0,end255,g);
-      b = remap(start255,255,0,end255,b);
-      return [r, g, b, a];
-    },
-  },
-  {
-    name: 'remap inner in/out sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let start255 = + uniform.sliders[0].value * 255;
-      let end255 = + uniform.sliders[1].value * 255;
-      r = remap(0,start255,end255,255,r);
-      g = remap(0,start255,end255,255,g);
-      b = remap(0,start255,end255,255,b);
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      let start = + uniform.sliders[0].value;
+      let end = + uniform.sliders[1].value;
+      r = remap(start,end,0,1,r);
+      g = remap(start,end,0,1,g);
+      b = remap(start,end,0,1,b);
       return [r, g, b, a];
     },
   },
   {
     name: 'transformColor',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
-      let tv = (v_x + v_y) * 0.5;
-      r = 3 * r * (1-t_y) * Math.sin(2 * t_x * Math.PI);
-      g = 3 * g * (1-t_x) * Math.sin(2 * t_y * Math.PI);
-      b = 3 * b * (1-t_x * t_y) * Math.sin(2 * t_x * t_y * Math.PI);
-      //g *= t_x * t_y;
-      //r *= Math.sin(t_x * Math.PI) * Math.cos(t_y * Math.PI);
-      //g = r;
-      //g *= t_y * (1-t_x);
-      // b *= t_y;
-      //r *= (1-t_y);
-      //g *= (1-t_x);
-      //b *= (1-t_y);// * t_y;
-      //b *= t_x * t_y;
-      //r = v_x;
-      //g = tv;
-      //g = tv;
-      //b = tv;
+    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+      r = 3 * r * (1-y) * Math.sin(2 * x * Math.PI);
+      g = 3 * g * (1-x) * Math.sin(2 * y * Math.PI);
+      b = 3 * b * (1 - x * y) * Math.sin(2 * x * y * Math.PI);
+      
       return [r,g,b,a];
     }
   }
@@ -330,13 +261,13 @@ function process(c,img,transformer) {
     let [x,y] = toXY(pixelIdx, c.width, c.height);
     //let t = lerp()
     //scalar.remap(0,277,0,1,276)
-    let t_x = invlerp(0,c.width,x);
-    let t_y = invlerp(0,c.height,y);
-    let v_x =  remap(0,c.width,0,255,x);
-    let v_y =  remap(0,c.height,0,255,y);
+    let x01 = invlerp(0,c.width,x);
+    let y01 = invlerp(0,c.height,y);
+    let x255 =  remap(0,c.width,0,255,x);
+    let y255 =  remap(0,c.height,0,255,y);
 
 
-    var [r,g,b,a] = [
+    var [r255,g255,b255,a255] = [
       imgData.data[i+0],
       imgData.data[i+1],
       imgData.data[i+2],
@@ -344,32 +275,32 @@ function process(c,img,transformer) {
     ];
     //console.log('i',i,'pixelIdx',pixelIdx,'x',x,'y',y,'t_x',t_x,'v_x',v_x);
 
-    [r,g,b,a] = transformer(
+    let [r,g,b,a] = transformer(
       x,
       y,
-      t_x, //x remapped from 0 to 1
-      t_y, //y remapped from 0 to 1
-      v_x, //x remapped from 0 to 255
-      v_y, //y remapped from 0 to 255
-      r, //0 to 255
-      g, //0 to 255
-      b, //0 to 255
-      a, //0 to 255
+      x01, //x remapped from 0 to 1
+      y01, //y remapped from 0 to 1
+      x255, //x remapped from 0 to 255
+      y255, //y remapped from 0 to 255
+      r255, //0 to 255
+      g255, //0 to 255
+      b255, //0 to 255
+      a255, //0 to 255
       {
         ...uniform,
         width: c.width,
         height: c.height
       },
-      r/255, //r from 0 to 1
-      g/255, //g from 0 to 1
-      b/255, //b from 0 to 1
-      a/255, //a from 0 to 1
+      r255/255, //r from 0 to 1
+      g255/255, //g from 0 to 1
+      b255/255, //b from 0 to 1
+      a255/255, //a from 0 to 1
     );
 
-    imgData.data[i+0] = r;
-    imgData.data[i+1] = g;
-    imgData.data[i+2] = b;
-    imgData.data[i+3] = a;
+    imgData.data[i+0] = r*255;
+    imgData.data[i+1] = g*255;
+    imgData.data[i+2] = b*255;
+    imgData.data[i+3] = a*255;
     pixelIdx += 1;
   }
   ctx.putImageData(imgData, 0, 0);
