@@ -41,36 +41,56 @@ function toXY(i,w,h) {
   return [x,y];
 }
 
+
+function chainOfTransforms(transforms) {
+  return function(...aBunchOfArgs) {
+    let result = transforms.reduce(function(accum,currentTransform){
+        let [r,g,b,a] = currentTransform(...accum);
+        let [oX,oY,oTX,oTY,oVX,oVY,oR,oG,oB,oA,...tail] = accum;
+        //but now we need to pass the updated r,g,b,a 
+        //along with the complete bunch of args
+        return [oX,oY,oTX,oTY,oVX,oVY,r,g,b,a,...tail]; //new accum with updatd r,g,b,a
+
+    },aBunchOfArgs);
+
+    let [oX,oY,oTX,oTY,oVX,oVY,nR,nG,nB,nA,...tail] = result;
+    return [nR,nG,nB,nA];
+    ////return result; //reduction of applying all the transforms
+  }
+
+}
+
+
 let transformers = [
   {
   name: 'identity',
-    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) {
       return [r, g, b, a];
     },
     sliderLabels: []
   },
   {
     name: 'follow X',
-    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) {
+    fn: function(x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) {
       return [v_x, v_x, v_x, a];
     },
   },
   {
     name: 'followY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       return [v_y, v_y, v_y, a];
     },
   },
   {
-    name: 'goob',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    name: 'goob: sin of tx*pi',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let v = Math.sin(t_x * Math.PI) * 255;
       return [v, v, v, a];
     }
   },
   {
-    name: 'goobpic',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    name: 'goobpic: sin of tx*pi*slider applied to rgb, where slider goes to 100',
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let s = + uniform.sliders[0].value * 100;
       let v = Math.sin(s * t_x * Math.PI);
       r *= v;
@@ -82,7 +102,7 @@ let transformers = [
   },
   {
     name: 'goobpic3',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let sr = + uniform.sliders[0].value * 100;
       let sg = + uniform.sliders[1].value * 100;
       let sb = + uniform.sliders[2].value * 100;
@@ -98,7 +118,7 @@ let transformers = [
   },
   {
     name: 'goobpic4',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -115,7 +135,7 @@ let transformers = [
   },  
   {
     name: 'goobpic5 slider: lerps r,g,b(255) towards 255',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -133,7 +153,7 @@ let transformers = [
   },  
   {
     name: 'goobpic6 slider: lerp +/- diff towards white',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -158,35 +178,35 @@ let transformers = [
   },  
   {
     name: 'tXY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let v = ((v_x * t_x) + (v_y * t_y))/2;
       return [v, v, v, a];
     },
   },
   {
     name: 'tv',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let tv = (v_x + v_y) * 0.5;
       return [tv, tv, tv, a];
     },
   },
   {
     name: 'redFadeOutWithY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       r *= (1-t_y);
       return [r,g,b,a];
     },
   },
   {
     name: 'redFadeInWithY',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       r *= t_y;
       return [r,g,b,a];
     },
   },
   {
     name: 'dunno',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       //r *= t_y;
       let t2 = Math.sqrt(t_x**2 + t_y**2)
       let t3 = (t2**2);
@@ -198,7 +218,7 @@ let transformers = [
   },
   {
     name: 'blushy',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let tv = (v_x + v_y) * 0.5;
       //r *= t_x * t_y;
       //g *= t_x * t_y;
@@ -218,7 +238,7 @@ let transformers = [
   },
   {
     name: 'remap input sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let start255 = + uniform.sliders[0].value * 255;
       let end255 = + uniform.sliders[1].value * 255;
       r = remap(start255,end255,0,255,r);
@@ -229,7 +249,7 @@ let transformers = [
   },
   {
     name: 'remap output sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let start255 = + uniform.sliders[0].value * 255;
       let end255 = + uniform.sliders[1].value * 255;
       r = remap(0,255,start255,end255,r);
@@ -240,7 +260,7 @@ let transformers = [
   },
   {
     name: 'remap outer in/out sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let start255 = + uniform.sliders[0].value * 255;
       let end255 = + uniform.sliders[1].value * 255;
       r = remap(start255,255,0,end255,r);
@@ -251,7 +271,7 @@ let transformers = [
   },
   {
     name: 'remap inner in/out sliders',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let start255 = + uniform.sliders[0].value * 255;
       let end255 = + uniform.sliders[1].value * 255;
       r = remap(0,start255,end255,255,r);
@@ -262,7 +282,7 @@ let transformers = [
   },
   {
     name: 'transformColor',
-    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform) => {
+    fn: (x,y,t_x,t_y,v_x,v_y,r,g,b,a,uniform,tr,tg,tb,ta) => {
       let tv = (v_x + v_y) * 0.5;
       r = 3 * r * (1-t_y) * Math.sin(2 * t_x * Math.PI);
       g = 3 * g * (1-t_x) * Math.sin(2 * t_y * Math.PI);
@@ -285,6 +305,15 @@ let transformers = [
   }
 ];
 
+transformers.push({
+  'name': 'combined tC with remap Input sliders',
+  fn: chainOfTransforms([
+  transformers.find(o => o.name.match(/transformColor/)).fn,
+  transformers.find(o => o.name.match(/remap input sliders/)).fn,  
+  ])
+})
+
+
 
 function process(c,img,transformer) {
   var ctx = c.getContext("2d");
@@ -293,7 +322,8 @@ function process(c,img,transformer) {
   ctx.drawImage(img, 0, 0);
   var imgData = ctx.getImageData(0, 0, c.width, c.height);
   //console.log(c.width,c.height);
-  // invert colors
+  console.log('imgData',imgData);
+  
   var i,pixelIdx = 0;
   for (i = 0; i < imgData.data.length; i += 4) {
     let pixelIdx = Math.floor(i / 4);
@@ -304,6 +334,8 @@ function process(c,img,transformer) {
     let t_y = invlerp(0,c.height,y);
     let v_x =  remap(0,c.width,0,255,x);
     let v_y =  remap(0,c.height,0,255,y);
+
+
     var [r,g,b,a] = [
       imgData.data[i+0],
       imgData.data[i+1],
@@ -319,15 +351,19 @@ function process(c,img,transformer) {
       t_y, //y remapped from 0 to 1
       v_x, //x remapped from 0 to 255
       v_y, //y remapped from 0 to 255
-      r,
-      g,
-      b,
-      a,
+      r, //0 to 255
+      g, //0 to 255
+      b, //0 to 255
+      a, //0 to 255
       {
         ...uniform,
         width: c.width,
         height: c.height
-      }
+      },
+      r/255, //r from 0 to 1
+      g/255, //g from 0 to 1
+      b/255, //b from 0 to 1
+      a/255, //a from 0 to 1
     );
 
     imgData.data[i+0] = r;
