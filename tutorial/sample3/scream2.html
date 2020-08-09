@@ -46,16 +46,17 @@ function chainOfTransforms(transforms) {
   return function(...aBunchOfArgs) {
     let result = transforms.reduce(function(accum,currentTransform){
         let [r,g,b,a] = currentTransform(...accum);
-        let [oX,oY,oTX,oTY,oVX,oVY,oR,oG,oB,oA,...tail] = accum;
+        //let [oX,oY,oTX,oTY,oVX,oVY,oR,oG,oB,oA,...tail] = accum;
+        let [ox,oy,x,y,uniform,oR,oG,oB,oA] = accum;
+
         //but now we need to pass the updated r,g,b,a 
         //along with the complete bunch of args
-        return [oX,oY,oTX,oTY,oVX,oVY,r,g,b,a,...tail]; //new accum with updatd r,g,b,a
+        return [ox,oy,x,y,uniform,r,g,b,a]; //new accum with updatd r,g,b,a
 
     },aBunchOfArgs);
 
-    let [oX,oY,oTX,oTY,oVX,oVY,nR,nG,nB,nA,...tail] = result;
+    let [ox,oy,x,y,uniform,nR,nG,nB,nA] = result;
     return [nR,nG,nB,nA];
-    ////return result; //reduction of applying all the transforms
   }
 
 }
@@ -64,33 +65,33 @@ function chainOfTransforms(transforms) {
 let transformers = [
   {
   name: 'identity',
-    fn: function(ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) {
+    fn: function(ox,oy,x,y,uniform,r,g,b,a) {
       return [r, g, b, a];
     },
     sliderLabels: []
   },
   {
     name: 'follow X',
-    fn: function(ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) {
+    fn: function(ox,oy,x,y,uniform,r,g,b,a) {
       return [x, x, x, a];
     },
   },
   {
     name: 'followY',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       return [y, y, y, a];
     },
   },
   {
     name: 'goob: sin of tx*pi',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       let v = Math.sin(x * Math.PI);
       return [v, v, v, a];
     }
   },
   {
     name: 'goobpic: sin of tx*pi*slider applied to rgb, where slider goes to 100',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       let s = + uniform.sliders[0].value * 100;
       let v = Math.sin(s * x * Math.PI);
       r *= v;
@@ -102,7 +103,7 @@ let transformers = [
   },
   {
     name: 'goobpic3',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       let sr = + uniform.sliders[0].value * 100;
       let sg = + uniform.sliders[1].value * 100;
       let sb = + uniform.sliders[2].value * 100;
@@ -118,7 +119,7 @@ let transformers = [
   },
   {
     name: 'goobpic4',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -135,7 +136,7 @@ let transformers = [
   },  
   {
     name: 'goobpic5 slider: lerps r,g,b(0..1) towards 1',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -146,14 +147,14 @@ let transformers = [
       r = lerp(r,1,sr);
       g = lerp(g,1,sg);
       b = lerp(b,1,sb);
-      ///a = lerp(a,255,sa);
+      ///a = lerp(a,1,sa);
 
       return [r, g, b, a];
     }
   },  
   {
     name: 'goobpic6 slider: lerp/extrapolate +/- diff towards/away white',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
 
       let sr = + uniform.sliders[0].value;
       let sg = + uniform.sliders[1].value;
@@ -173,28 +174,28 @@ let transformers = [
   },  
   {
     name: 'tXY',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       let v = (x + y)/2;
       return [v, v, v, a];
     },
   },
   {
     name: 'redFadeOutWithY',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       r *= 1 - y;
       return [r,g,b,a];
     },
   },
   {
     name: 'redFadeInWithY',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       r *= y;
       return [r,g,b,a];
     },
   },
   {
     name: 'dunno',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       //r *= t_y;
       let t2 = Math.sqrt(x**2 + y**2)
       let t3 = (t2**2);
@@ -206,7 +207,7 @@ let transformers = [
   },
   {
     name: 'blushy',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       r *= Math.sin(x * Math.PI) * Math.cos(y * Math.PI);
       //g = r;
       b = r;
@@ -215,7 +216,7 @@ let transformers = [
   },
   {
     name: 'remap input sliders',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       let start = + uniform.sliders[0].value;
       let end = + uniform.sliders[1].value;
       r = remap(start,end,0,1,r);
@@ -226,7 +227,7 @@ let transformers = [
   },
   {
     name: 'transformColor',
-    fn: (ox,oy,x,y,x255,y255,r255,g255,b255,a255,uniform,r,g,b,a) => {
+    fn: (ox,oy,x,y,uniform,r,g,b,a) => {
       r = 3 * r * (1-y) * Math.sin(2 * x * Math.PI);
       g = 3 * g * (1-x) * Math.sin(2 * y * Math.PI);
       b = 3 * b * (1 - x * y) * Math.sin(2 * x * y * Math.PI);
@@ -280,12 +281,6 @@ function process(c,img,transformer) {
       y,
       x01, //x remapped from 0 to 1
       y01, //y remapped from 0 to 1
-      x255, //x remapped from 0 to 255
-      y255, //y remapped from 0 to 255
-      r255, //0 to 255
-      g255, //0 to 255
-      b255, //0 to 255
-      a255, //0 to 255
       {
         ...uniform,
         width: c.width,
