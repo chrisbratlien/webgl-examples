@@ -5,16 +5,31 @@
 </head>
 <body>
 
+Texture
+  <img class="img-texture" src="diag16.png" alt="Texture">
+  <canvas class="canvas-texture">
+  Your browser does not support the HTML5 canvas tag.
+  </canvas>
+
+
+Scream
   <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
   <canvas id="myCanvas" class="canvas-scream">
   Your browser does not support the HTML5 canvas tag.
   </canvas>
 
-
+Lindt/File Browse
   <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
   <canvas class="canvas-chocolate">
   Your browser does not support the HTML5 canvas tag.
   </canvas>
+
+
+
+
+
+
+
   <input class="file-input" type="file" />
 <br />
   <select class="dd-transformer">
@@ -266,6 +281,9 @@ transformers.push({
 function process(c,img,transformer) {
   var ctx = c.getContext("2d");
   var textureContext = textureCanvas.getContext('2d');
+  textureCanvas.width = textureImg.width;
+  textureCanvas.height = textureImg.height;
+  textureContext.drawImage(textureImg, 0, 0);  
   var textureData = textureContext.getImageData(0, 0, textureCanvas.width, textureCanvas.height);
 
   console.log('textureData',textureData);
@@ -296,8 +314,12 @@ function process(c,img,transformer) {
       imgData.data[i+3],
     ];
 
-    var texturePixelIdx = (pixelIdx % textureCanvas.width);
-    var textureI = texturePixelIdx * 4;
+    //var texturePixelIdx = (pixelIdx % textureCanvas.width);
+
+    var texturePixelIdx = (pixelIdx % c.width) % textureCanvas.width;
+    var textureY = y % textureCanvas.height;
+
+    var textureI = textureY * texturePixelIdx * 4;
     var textureR255 = textureData.data[textureI + 0];
     var textureG255 = textureData.data[textureI + 1];
     var textureB255 = textureData.data[textureI + 2];
@@ -337,8 +359,11 @@ function process(c,img,transformer) {
 var c = document.getElementById("myCanvas");
 var img = document.getElementById("scream");
 
-var textureCanvas = document.querySelector('.canvas-scream');
-var textureImg = document.querySelector('.scream-jpg');
+var textureCanvas = document.querySelector('.canvas-texture');
+var textureImg = document.querySelector('.img-texture');
+////textureImg.src='diag16.png';
+
+
 
 var c2 = document.querySelector('.canvas-chocolate');
 var img2 = document.querySelector('.lindt-jpg');
