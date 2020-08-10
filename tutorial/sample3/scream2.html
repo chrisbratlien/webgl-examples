@@ -5,10 +5,10 @@
 </head>
 <body>
 
-  <img id="scream" src="img_the_scream.jpg" alt="The Scream">
-  <canvas id="myCanvas">
+  <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
+  <canvas id="myCanvas" class="canvas-scream">
   Your browser does not support the HTML5 canvas tag.
-</canvas>
+  </canvas>
 
 
   <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
@@ -229,11 +229,25 @@ let transformers = [
   },
   {
     name: 'transformColor: a bunch of crazy',
-    fn: (x,y,uniform,r,g,b,a) => {
+    fn: (x,y,uniform,r,g,b,a,textureR) => {
       r = 3 * r * (1-y) * Math.sin(2 * x * Math.PI);
       g = 3 * g * (1-x) * Math.sin(2 * y * Math.PI);
       b = 3 * b * (1 - x * y) * Math.sin(2 * x * y * Math.PI);
       
+      return [r,g,b,a];
+    }
+  },
+  {
+    name: 'transformColor: a bunch of crazy, with texture',
+    fn: (x,y,uniform,r,g,b,a,tr,tg,tb,ta) => {
+      r = 3 * r * (1-y) * Math.sin(2 * x * Math.PI);
+      g = 3 * g * (1-x) * Math.sin(2 * y * Math.PI);
+      b = 3 * b * (1 - x * y) * Math.sin(2 * x * y * Math.PI);
+      
+      r *= tr;
+      g *= tg;
+      b *= tb;
+      a *= ta;
       return [r,g,b,a];
     }
   }
@@ -251,6 +265,11 @@ transformers.push({
 
 function process(c,img,transformer) {
   var ctx = c.getContext("2d");
+  var textureContext = textureCanvas.getContext('2d');
+  var textureData = textureContext.getImageData(0, 0, textureCanvas.width, textureCanvas.height);
+
+  console.log('textureData',textureData);
+
   c.width = img.width;
   c.height = img.height;
   ctx.drawImage(img, 0, 0);
@@ -276,6 +295,16 @@ function process(c,img,transformer) {
       imgData.data[i+2],
       imgData.data[i+3],
     ];
+
+    var texturePixelIdx = (pixelIdx % textureCanvas.width);
+    var textureI = texturePixelIdx * 4;
+    var textureR255 = textureData.data[textureI + 0];
+    var textureG255 = textureData.data[textureI + 1];
+    var textureB255 = textureData.data[textureI + 2];
+    var textureA255 = textureData.data[textureI + 3];
+
+
+
     //console.log('i',i,'pixelIdx',pixelIdx,'x',x,'y',y,'t_x',t_x,'v_x',v_x);
 
     let [r,g,b,a] = transformer(
@@ -290,6 +319,10 @@ function process(c,img,transformer) {
       g255/255, //g from 0 to 1
       b255/255, //b from 0 to 1
       a255/255, //a from 0 to 1
+      textureR255/255, //texture R from 0 to 1
+      textureG255/255, //texture G from 0 to 1
+      textureB255/255, //texture B from 0 to 1
+      textureA255/255, //texture A from 0 to 1
     );
 
     imgData.data[i+0] = r*255;
@@ -304,12 +337,14 @@ function process(c,img,transformer) {
 var c = document.getElementById("myCanvas");
 var img = document.getElementById("scream");
 
+var textureCanvas = document.querySelector('.canvas-scream');
+var textureImg = document.querySelector('.scream-jpg');
+
 var c2 = document.querySelector('.canvas-chocolate');
 var img2 = document.querySelector('.lindt-jpg');
+
 var sel = document.querySelector('.dd-transformer');
-
 var sliderWrap = document.querySelector('.slider-wrap');
-
 var fileInput = document.querySelector('.file-input');
 
 var procrastinator = false;
