@@ -6,8 +6,17 @@
 </head>
 
 <body>
+  <div class="flex-column">
+    <label>Scream Image</label>
+    <div class="img-canvas-pair">
+      <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
+      <canvas id="myCanvas" class="canvas-scream">
+      Your browser does not support the HTML5 canvas tag.
+      </canvas>    
+    </div>
+  </div>
 
-  <div class="slider-wrap flex-column">
+  <div class="flex-column">
     Texture Image
     <div class="img-canvas-pair">
       <img class="img-texture" src="diag4.png" alt="Texture" />
@@ -19,15 +28,6 @@
     <input class="texture-file-input" type="file" />  
   </div>
 
-  <div class="slider-wrap flex-column">
-    <label>Scream Image</label>
-    <div class="img-canvas-pair">
-      <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
-      <canvas id="myCanvas" class="canvas-scream">
-      Your browser does not support the HTML5 canvas tag.
-      </canvas>    
-    </div>
-  </div>
 
   <div class="flex-column">
     Guest-supplied Image
@@ -44,6 +44,7 @@
     </select>  
   </div>
 
+  <div class="slider-wrap flex-column"></div>
 
 
   <script type="module">
@@ -318,7 +319,7 @@
     })
 
     transformers.push({
-      'name': 'combined: texture mask exper -> transformColor',
+      'name': 'combined: texture mask exper -> transformColor -> remap input sliders',
       fn: chainOfTransformers([
         transformers.find(o => o.name.match(/texture: mask exper/)).fn,
         transformers.find(o => o.name.match(/transformColor/)).fn,
