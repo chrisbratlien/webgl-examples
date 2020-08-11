@@ -268,7 +268,18 @@
         }
       },
       {
-        name: 'texture: mask experiemtn',
+        name: 'texture: texture only',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+
+          r = tr;
+          g = tg;
+          b = tb;
+          a = ta;
+          return [r, g, b, a];
+        }
+      },
+      {
+        name: 'texture: mask experiment',
         fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
 
           r *= tr;
