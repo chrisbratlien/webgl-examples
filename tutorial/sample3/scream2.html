@@ -288,6 +288,18 @@
           a *= ta;
           return [r, g, b, a];
         }
+      },
+      {
+        name: 'texture: 1 - textureRed channel passes',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+
+          let v = 1 - tr;
+          r *= v;
+          g *= v;
+          b *= v;
+          a *= v;
+          return [r, g, b, a];
+        }
       }
 
     ];
@@ -340,30 +352,30 @@
 
         //var texturePixelIdx = (pixelIdx % textureCanvas.width);
 
-        var texturePixelIdx = (pixelIdx % c.width) % textureCanvas.width;
         var textureY = y % textureCanvas.height;
-
+        var texturePixelIdx = textureY * textureCanvas.width +  (pixelIdx % c.width) % textureCanvas.width;
+      
         var textureI = texturePixelIdx * 4;
         var textureR255 = textureData.data[textureI + 0];
         var textureG255 = textureData.data[textureI + 1];
         var textureB255 = textureData.data[textureI + 2];
         var textureA255 = textureData.data[textureI + 3];
 
-        console.log(
+       false && console.log(
           'i', i,
           'x', x,
           'y', y,
           'pixelIdx', pixelIdx,
-          'texturePixelIdx', texturePixelIdx,
           'y', y,
           'textureY', textureY,
+          'texturePixelIdx', texturePixelIdx,
           'textureI', textureI,
           'tr255', textureR255,
           'tg255', textureG255,
           'tb', textureB255,
           'ta', textureA255);
 
-        if (pixelIdx > 1000) {
+        if (false && pixelIdx > 1600) {
           break;
         }
 
