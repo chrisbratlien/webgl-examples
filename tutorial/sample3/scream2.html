@@ -7,38 +7,43 @@
 
 <body>
 
-  Texture
-  <img class="img-texture" src="diag4.png" alt="Texture">
-  <canvas class="canvas-texture">
-    Your browser does not support the HTML5 canvas tag.
-  </canvas>
-
-
-  Scream
-  <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
-  <canvas id="myCanvas" class="canvas-scream">
-    Your browser does not support the HTML5 canvas tag.
-  </canvas>
-
-  Lindt/File Browse
-  <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
-  <canvas class="canvas-chocolate">
-    Your browser does not support the HTML5 canvas tag.
-  </canvas>
-
-
-
-
-
-
-
-  <input class="file-input" type="file" />
-  <br />
-  <select class="dd-transformer">
-    <option> (choose) </option>
-  </select>
   <div class="slider-wrap flex-column">
+    Texture Image
+    <div class="img-canvas-pair">
+      <img class="img-texture" src="diag4.png" alt="Texture" />
+      <canvas class="canvas-texture">
+        Your browser does not support the HTML5 canvas tag.
+      </canvas>  
+    </div>
+    Texture File
+    <input class="texture-file-input" type="file" />  
   </div>
+
+  <div class="slider-wrap flex-column">
+    <label>Scream Image</label>
+    <div class="img-canvas-pair">
+      <img id="scream" class="scream-jpg" src="img_the_scream.jpg" alt="The Scream">
+      <canvas id="myCanvas" class="canvas-scream">
+      Your browser does not support the HTML5 canvas tag.
+      </canvas>    
+    </div>
+  </div>
+
+  <div class="flex-column">
+    Guest-supplied Image
+    <div class="img-canvas-pair">
+      <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
+      <canvas class="canvas-chocolate">
+      Your browser does not support the HTML5 canvas tag.
+      </canvas>
+    </div>
+    <label>Guest File</label>
+    <input class="guest-file-input" type="file" />
+    <select class="dd-transformer">
+      <option> (choose) </option>
+    </select>  
+  </div>
+
 
 
   <script type="module">
@@ -290,7 +295,7 @@
         }
       },
       {
-        name: 'texture: 1 - textureRed channel passes',
+        name: 'texture mask: 1 - texture red channel',
         fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
 
           let v = 1 - tr;
@@ -305,12 +310,23 @@
     ];
 
     transformers.push({
-      'name': 'combined tC with remap Input sliders',
+      'name': 'combined transformColor with remap Input sliders',
       fn: chainOfTransformers([
         transformers.find(o => o.name.match(/transformColor/)).fn,
         transformers.find(o => o.name.match(/remap input sliders/)).fn,
       ])
     })
+
+    transformers.push({
+      'name': 'combined: texture mask exper -> transformColor',
+      fn: chainOfTransformers([
+        transformers.find(o => o.name.match(/texture: mask exper/)).fn,
+        transformers.find(o => o.name.match(/transformColor/)).fn,
+        transformers.find(o => o.name.match(/remap input sliders/)).fn,
+      ])
+    })
+
+
 
 
 
@@ -414,6 +430,7 @@
 
     var textureCanvas = document.querySelector('.canvas-texture');
     var textureImg = document.querySelector('.img-texture');
+    var textureFileInput = document.querySelector('.texture-file-input');
     ////textureImg.src='diag16.png';
 
 
@@ -423,7 +440,7 @@
 
     var sel = document.querySelector('.dd-transformer');
     var sliderWrap = document.querySelector('.slider-wrap');
-    var fileInput = document.querySelector('.file-input');
+    var guestFileInput = document.querySelector('.guest-file-input');
 
     var procrastinator = false;
 
@@ -456,9 +473,6 @@
       process(c2, img2, selectedFN);
     });
 
-    function fileOnload(e) {
-      img2.src = e.target.result;
-    }
 
     setTimeout(function () {
       //sometimtes this was causing process to run before the js modules have 
@@ -472,12 +486,24 @@
 
     }, 2000);
 
-    fileInput.addEventListener('change', function (e) {
-      console.log(e.target.files);
-      var file = e.target.files[0];
-      var reader = new FileReader();
-      reader.onload = fileOnload;
-      reader.readAsDataURL(file);
+
+
+    function setupFileInput(input,onload) {
+      input.addEventListener('change', function (e) {
+        console.log(e.target.files);
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = onload;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    setupFileInput(guestFileInput,function(e) {
+      img2.src = e.target.result;
+    });
+
+    setupFileInput(textureFileInput,function(e) {
+      textureImg.src = e.target.result;
     });
 
 
