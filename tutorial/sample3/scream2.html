@@ -32,7 +32,7 @@
   <div class="flex-column">
     Guest-supplied Image
     <div class="img-canvas-pair">
-      <img class="lindt-jpg" src="lindt.jpg" alt="Chocolate">
+      <img class="lindt-jpg guest-jpg" src="lindt.jpg" alt="Chocolate">
       <canvas class="canvas-chocolate">
       Your browser does not support the HTML5 canvas tag.
       </canvas>
@@ -218,6 +218,29 @@
         },
       },
       {
+        name: 'MASK: ROUNDY',
+        fn: (x, y, uniform, r, g, b, a) => {
+          let v = x*x + y*y;
+          let plot = v >= 0.5 ? 1 : 0;
+          r *= plot;
+          g *= plot;
+          b *= plot;
+          return [r, g, b, a];
+        },
+      },
+      {
+        name: 'SOURCE: ROUNDY',
+        fn: (x, y, uniform, r, g, b, a) => {
+          let v = x*x + y*y;
+          let plot = v >= 0.5 ? 1 : 0;
+          r = plot; //HARD CODES THESE
+          g = plot;
+          b = plot;
+          
+          return [r, g, b, a];
+        },
+      },
+      {
         name: 'dunno',
         fn: (x, y, uniform, r, g, b, a) => {
           //r *= t_y;
@@ -296,7 +319,7 @@
         }
       },
       {
-        name: 'texture mask: 1 - texture red channel',
+        name: 'MASK/FILTER: INVERSE texture red channel (alpha masked too)',
         fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
 
           let v = 1 - tr;
@@ -304,6 +327,54 @@
           g *= v;
           b *= v;
           a *= v;
+          return [r, g, b, a];
+        }
+      },
+      {
+        name: 'MASK/FILTER: texture red channel (alpha masked too)',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+
+          let v = tr;
+          r *= v;
+          g *= v;
+          b *= v;
+          a *= v;
+          return [r, g, b, a];
+        }
+      },
+      {
+        name: 'MASK/FILTER: INVERSE texture red channel (ORIG ALPHA)',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+
+          let v = 1 - tr;
+          r *= v;
+          g *= v;
+          b *= v;
+          return [r, g, b, a];
+        }
+      },
+      {
+        name: 'MASK/FILTER: texture red channel (ORIG ALPHA)',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+
+          let v = tr;
+          r *= v;
+          g *= v;
+          b *= v;
+          return [r, g, b, a];
+        }
+      }
+      ,
+      {
+        name: 'MASK/FILTER: texture red channel (ALPHA *= first slider)',
+        fn: (x, y, uniform, r, g, b, a, tr, tg, tb, ta) => {
+          let s0 = +uniform.sliders[0].value;
+
+          let v = tr;
+          r *= v;
+          g *= v;
+          b *= v;
+          a *= s0;
           return [r, g, b, a];
         }
       }
@@ -326,6 +397,20 @@
         transformers.find(o => o.name.match(/remap input sliders/)).fn,
       ])
     })
+
+    function chainGang(names) {
+      return chainOfTransformers(names.map(name => transformers.find(t => t.name.match(name)).fn));
+    }
+
+    transformers.push({
+      'name': 'combined: texture mask exper ->tC -> ROUNDY ->remap sliders',
+      fn: chainGang([
+        /texture: mask exper/,
+        /transformColor/,
+        /MASK: ROUNDY/,
+        /remap input sliders/
+      ])
+    });
 
 
 
@@ -437,7 +522,7 @@
 
 
     var c2 = document.querySelector('.canvas-chocolate');
-    var img2 = document.querySelector('.lindt-jpg');
+    var guestImg = document.querySelector('.guest-jpg');
 
     var sel = document.querySelector('.dd-transformer');
     var sliderWrap = document.querySelector('.slider-wrap');
@@ -470,17 +555,22 @@
     sel.addEventListener('change', function () {
       //console.log('selInd',sel.selectedIndex);
       selectedFN = getFN();
-      process(c, img, selectedFN)
-      process(c2, img2, selectedFN);
+      repaint();
     });
 
+    function repaint() {
+      if (!selectedFN) { return console.log('repaint: no selected function!!'); }
+      process(c, img, selectedFN)
+      process(c2, guestImg, selectedFN);
+    }
 
     setTimeout(function () {
       //sometimtes this was causing process to run before the js modules have 
       //finished loading... so the setTimeout is an ugly temporary fix
-      img2.addEventListener('load', function () {
+      guestImg.addEventListener('load', function () {
         console.log('LOAD!!!');
-        process(c2, img2, selectedFN);
+        if (!selectedFN) { return false; }
+        repaint();
       });
 
 
@@ -500,11 +590,13 @@
     }
 
     setupFileInput(guestFileInput,function(e) {
-      img2.src = e.target.result;
+      guestImg.src = e.target.result;
+      repaint();
     });
 
     setupFileInput(textureFileInput,function(e) {
       textureImg.src = e.target.result;
+      repaint();
     });
 
 
@@ -523,8 +615,7 @@
         //console.log(e.target.value,sl.value)
         clearTimeout(procrastinator);
         procrastinator = setTimeout(function () {
-          process(c, img, selectedFN)
-          process(c2, img2, selectedFN);
+          repaint();
         }, 100);
       });
       uniform.sliders.push(sl);
