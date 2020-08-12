@@ -1,162 +1,22 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>WebGL Demo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-    <link rel="stylesheet" href="../webgl.css" type="text/css">
-    <link rel="stylesheet" href="style.css" type="text/css">
-    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
-  </head>
+<html>
 
-  <body>
-    <div class="stage">
-      <div class="column-code column">
-        <div class="btn-group controls">
-          <button class="btn btn-primary btn-sm btn-render">Render</button>
-          <label>
-            <input class="cb-auto-render" type="checkbox" /> Auto render
-          </label>
-          <label>
-            <input class="cb-logging" type="checkbox" /> Logging
-          </label>          
-        </div>
-        Vertex
-        <textarea class="code vs-code"></textarea>
-        Fragment
-        <textarea class="code fs-code"></textarea>
-      </div>
-      <div class="column column-render">
-        <div class="errors">
-        </div>
-        <div class="logs">
-        </div>
-        <canvas id="glcanvas" ></canvas>
-      </div>
-    </div>
-  </body>
+<head>
+</head>
 
-  <script src="../gl-matrix.js"></script>
-  <script src="webgl-demo.js"></script>
-  <script>
+<body>
+  <h1>Experiments with shaders</h1>
+  <ul>
+    <li><a target="_blank" href="live-shaders.html">Live shaders</a> MDN Sample 3 updated to have live editable
+      textareas for the WebGL
+      GLSL
+      code</li>
+    <li><a target="_blank" href="silly-js-shader.html">Silly JS shader</a> Experiments with some shader concepts in
+      JavaScript and the
+      regular 2D canvas. No WebGL or GLSL. Built on the
+      w3schools example with <a target="_blank" href="https://www.w3schools.com/tags/canvas_getimagedata.asp">The
+        Scream</a></li>
+  </ul>
 
-var vsSource = `
-    precision lowp float;
-    attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColor;
+</body>
 
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-    uniform float u_time;
-    varying lowp vec4 vColor;
-
-    void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vColor = aVertexColor;
-    }
-   
-  `;
-
-  var fsSource = `
-   
-    precision lowp float;
-    uniform float u_time;
-    varying lowp vec4 vColor;
-    float k = 0.707;
-    float copyOfTime = u_time;
-    void main(void) {
-      //gl_FragColor = vColor;
-      gl_FragColor = vec4(u_time, 1.0, 1.0, 1.0); //use u_time once
-      gl_FragColor = vec4(vec3(1.0, u_time, 1.0), 1.0);
-    }
-
-    
-
-
-    `;
-
-    const positions = [
-    1.0,  1.0,
-    -1.0,  1.0,
-    1.0, -1.0,
-    -1.0, -1.0,
-  ];
-  var colors = [
-    1.0,  1.0,  0.0,  1.0,    // white
-    1.0,  0.0,  0.0,  1.0,    // red
-    0.0,  1.0,  0.0,  1.0,    // green
-    0.0,  0.0,  1.0,  1.0,    // blue
-  ];
-  const btnRender = document.querySelector('.btn-render')
-
-  const taVSCode = document.querySelector('.vs-code')
-  const taFSCode = document.querySelector('.fs-code')
-  const uiErrors = document.querySelector('.errors')
-  const uiLogs = document.querySelector('.logs')
-  const cbAutoRender = document.querySelector('.cb-auto-render')
-  const cbLogging = document.querySelector('.cb-logging')
-
-  var boolAutoRender = false;
-  var boolLogging = false;
-
-  taVSCode.value = vsSource;
-  taFSCode.value = fsSource;
-
-  function showError(errorOrMessage) {
-    if (!errorOrMessage) {
-      return uiErrors.innerHTML = '';
-    }
-    if (errorOrMessage instanceof Error) {
-      return uiErrors.innerHTML = errorOrMessage.message;
-    }
-    uiErrors.innerHTML = errorOrMessage;
-  }
-  function showLog(...theArgs) {
-    if (!boolLogging) { return false; }
-    //console.log('theArgs',theArgs);
-    var msg = theArgs.reduce( (accum, arg) => {
-      //console.log('arg',arg,'accum',accum);
-      accum.push( JSON.stringify(arg,null,4) );
-      return accum;
-    },[]);
-    //console.log('msg',msg);
-    uiLogs.innerHTML += `<pre>${msg.join("\n")}</pre>`;
-  }
-
-
-  cbAutoRender.addEventListener('change',function(){
-    boolAutoRender = this.checked;
-    if (boolAutoRender) { render(); }
-  });
-
-  btnRender.addEventListener('click',render);
-
-  function render() {
-    vsSource = taVSCode.value;
-    fsSource = taFSCode.value;
-    ///console.log(fsSource)
-    try {
-      showError(false); //clears errors
-      main();
-
-    }
-    catch (e) {
-      showError(e.message);
-    }
-    if (boolAutoRender) {
-      setTimeout(render,100);
-    }
-  }
-
-  let timerUpdate = false;
-  taFSCode.addEventListener('keyup',function() {
-    ////console.log('wee');
-    clearTimeout(timerUpdate);
-    timerUpdate = setTimeout(render,100);
-  });
-
-
-  //kick off
-  render();
-  </script>
 </html>
